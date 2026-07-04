@@ -16,51 +16,10 @@ if uploaded_file:
 
     st.success("✅ Arquivo carregado com sucesso!")
 
-    gerar_externas = st.checkbox("Gerar Externas", value=True)
-    gerar_caravanas = st.checkbox("Gerar Caravanas", value=True)
-    gerar_alertas = st.checkbox("Gerar Alertas", value=True)
+    st.subheader("📋 COLUNAS ENCONTRADAS")
 
-    if st.button("🚀 PROCESSAR"):
+    for col in df.columns:
+        st.write(col)
 
-        # =========================
-        # EXTERNAS
-        # =========================
-
-        if gerar_externas:
-
-            st.header("🚚 BOLETIM EXTERNAS")
-
-            palavras_externa = [
-                "camarim",
-                "figurino",
-                "furgão",
-                "pickup",
-                "pick-up"
-            ]
-
-            externas = df[
-                df["Tipo de Veículo"]
-                .astype(str)
-                .str.lower()
-                .str.contains("|".join(palavras_externa))
-            ]
-
-            grupos = externas.groupby("Programa")
-
-            for programa, grupo in grupos:
-
-                st.subheader(f"🎬 {programa}")
-
-                horario = grupo["Data Hora"].min()
-
-                st.write(f"⏰ Horário inicial: {horario}")
-
-                contagem = (
-                    grupo["Tipo de Veículo"]
-                    .value_counts()
-                )
-
-                for veiculo, qtd in contagem.items():
-                    st.write(f"🚘 {qtd:02d} {veiculo}")
-
-                st.divider()
+    st.subheader("📊 Prévia do Excel")
+    st.dataframe(df.head())
