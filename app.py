@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 
 st.set_page_config(page_title="Gerador Operacional EG")
 
@@ -10,11 +11,33 @@ uploaded_file = st.file_uploader(
 )
 
 if uploaded_file:
-    st.success("Arquivo carregado com sucesso!")
+
+    df = pd.read_excel(uploaded_file)
+
+    st.success("✅ Arquivo carregado com sucesso!")
+
+    st.subheader("📊 Prévia do Relatório")
+    st.dataframe(df.head())
 
     gerar_externas = st.checkbox("Gerar Externas", value=True)
     gerar_caravanas = st.checkbox("Gerar Caravanas", value=True)
     gerar_alertas = st.checkbox("Gerar Alertas", value=True)
 
     if st.button("🚀 PROCESSAR"):
-        st.write("Processando relatório operacional...")
+
+        st.subheader("🎬 PRODUÇÕES IDENTIFICADAS")
+
+        if "Programa" in df.columns:
+
+            programas = (
+                df["Programa"]
+                .dropna()
+                .astype(str)
+                .unique()
+            )
+
+            for programa in programas:
+                st.success(programa)
+
+        else:
+            st.error("❌ Coluna 'Programa' não encontrada.")
