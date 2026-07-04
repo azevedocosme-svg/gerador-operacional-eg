@@ -14,6 +14,12 @@ if uploaded_file:
 
     df = pd.read_excel(uploaded_file)
 
+    # Converter Data Hora
+    df["Data Hora"] = pd.to_datetime(
+        df["Data Hora"],
+        errors="coerce"
+    )
+
     st.success("✅ Arquivo carregado com sucesso!")
 
     gerar_externas = st.checkbox("Gerar Externas", value=True)
@@ -45,9 +51,14 @@ if uploaded_file:
 
                 st.subheader(f"🎬 {programa}")
 
-                horario = grupo["Data Hora"].min()
+                horario = grupo["Data Hora"].dropna().min()
 
-                st.write(f"⏰ Horário inicial: {horario}")
+                if pd.notna(horario):
+                    horario_formatado = horario.strftime("%d/%m/%Y %H:%M")
+                else:
+                    horario_formatado = "Não informado"
+
+                st.write(f"⏰ Horário inicial: {horario_formatado}")
 
                 contagem = (
                     grupo["Tipo de Veículo"]
