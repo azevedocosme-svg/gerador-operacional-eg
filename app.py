@@ -3,7 +3,7 @@ import pandas as pd
 import re
 
 # ==================================================
-# CONFIGURAÇÃO DA PÁGINA
+# CONFIGURAÇÃO
 # ==================================================
 
 st.set_page_config(
@@ -38,16 +38,17 @@ def limpar_nome_programa(nome):
 
     nome = str(nome)
 
+    match = re.search(r"\d+\s*-\s*(.*?)\/", nome)
+
+    if match:
+        return match.group(1).strip().upper()
+
     partes = nome.split("-")
 
-    if len(partes) >= 3:
-        nome_limpo = partes[2]
-    else:
-        nome_limpo = nome
+    if len(partes) >= 2:
+        return partes[1].strip().upper()
 
-    nome_limpo = nome_limpo.split("/")[0]
-
-    return nome_limpo.strip().upper()
+    return nome.upper()
 
 
 def obter_os(nome):
@@ -59,10 +60,7 @@ def obter_os(nome):
 
     partes = nome.split("-")
 
-    if len(partes) > 0:
-        return partes[0].strip()
-
-    return "-"
+    return partes[0].strip()
 
 
 def extrair_locacao(obs, endereco):
@@ -74,28 +72,29 @@ def extrair_locacao(obs, endereco):
 
     texto = str(texto)
 
-    palavras_chave = [
-        "FAZENDA",
-        "PRAIA",
-        "ESTRADA",
-        "AVENIDA",
-        "RUA",
-        "HOTEL",
-        "SÍTIO",
-        "SITIO",
-        "HARAS",
-        "GALPÃO",
-        "GALPAO",
-        "STUDIO",
-        "EXTERNA",
-        "LOCAÇÃO",
-        "LOCACAO"
+    padroes = [
+        r"(FAZENDA.*?)(\.|,|ESTÚDIOS|ESTUDIOS|$)",
+        r"(MERCADO.*?)(\.|,|ESTÚDIOS|ESTUDIOS|$)",
+        r"(PRAIA.*?)(\.|,|ESTÚDIOS|ESTUDIOS|$)",
+        r"(HOTEL.*?)(\.|,|ESTÚDIOS|ESTUDIOS|$)",
+        r"(HARAS.*?)(\.|,|ESTÚDIOS|ESTUDIOS|$)",
+        r"(SÍTIO.*?)(\.|,|ESTÚDIOS|ESTUDIOS|$)",
+        r"(SITIO.*?)(\.|,|ESTÚDIOS|ESTUDIOS|$)",
+        r"(RUA.*?\d+)",
+        r"(ESTRADA.*?\d+)",
+        r"(AVENIDA.*?\d+)"
     ]
 
-    for palavra in palavras_chave:
+    for padrao in padroes:
 
-        if palavra in texto.upper():
-            return texto[:150]
+        resultado = re.search(
+            padrao,
+            texto,
+            re.IGNORECASE
+        )
+
+        if resultado:
+            return resultado.group(1).strip()
 
     return "Locação não identificada"
 
@@ -118,7 +117,7 @@ if arquivo:
     st.write(df.columns.tolist())
 
     # ==================================================
-    # CONSOLIDAÇÃO POR OT
+    # CONSOLIDAÇÃO
     # ==================================================
 
     df_consolidado = df.drop_duplicates(subset=["OT"])
@@ -168,18 +167,6 @@ if arquivo:
     )
 
     total_figurino = len(df_consolidado[mask_figurino])
-
-    # ==================================================
-    # PRESTADORES
-    # ==================================================
-
-    prestadores = (
-        df_consolidado["Prestador do Motorista"]
-        .value_counts()
-        .reset_index()
-    )
-
-    prestadores.columns = ["Prestador", "Quantidade"]
 
     # ==================================================
     # ALERTAS
@@ -239,14 +226,55 @@ if arquivo:
     st.write(f"⚠️ Motoristas sem telefone: {sem_telefone}")
 
     # ==================================================
-    # PRESTADORES
+    # DISTRIBUIÇÃO POR PRESTADOR
     # ==================================================
 
     st.markdown("---")
 
-    st.markdown("# 🚛 PRESTADORES")
+    st.markdown("# 🚛 DISTRIBUIÇÃO POR PRESTADOR")
 
-    st.table(prestadores)
+    prestadores = df_consolidado.groupby(
+        ["Prestador do Motorista", "Tipo de Veículo"]
+    ).size().reset_index(name="Quantidade")
+
+    for fornecedor in prestadores["Prestador do Motorista"].unique():
+
+        st.markdown("━━━━━━━━━━━━━━━━━━━━━━")
+
+        st.markdown(f"## 🚛 {fornecedor}")
+
+        grupo = prestadores[
+            prestadores["Prestador do Motorista"] == fornecedor
+        ]
+
+        for _, linha in grupo.iterrows():
+
+            tipo = linha["Tipo de Veículo"]
+
+            qtd = linha["Quantidade"]
+
+            st.write(f"🚘 {tipo} → {qtd}")
+
+    # ==================================================
+    # RESUMO GERAL VEÍCULOS
+    # ==================================================
+
+    st.markdown("---")
+
+    st.markdown("# 📊 RESUMO GERAL DE VEÍCULOS")
+
+    resumo_veiculos = (
+        df_consolidado["Tipo de Veículo"]
+        .value_counts()
+        .reset_index()
+    )
+
+    resumo_veiculos.columns = [
+        "Tipo Veículo",
+        "Quantidade"
+    ]
+
+    st.table(resumo_veiculos)
 
     # ==================================================
     # BOLETIM EXTERNAS
@@ -258,7 +286,9 @@ if arquivo:
 
     for programa in externas["Programa"].dropna().unique():
 
-        grupo = externas[externas["Programa"] == programa]
+        grupo = externas[
+            externas["Programa"] == programa
+        ]
 
         programa_limpo = limpar_nome_programa(programa)
 
@@ -298,4 +328,5 @@ if arquivo:
         tipos = grupo["Tipo de Veículo"].value_counts()
 
         for tipo, qtd in tipos.items():
+
             st.write(f"🚘 {qtd:02d} {tipo}")
