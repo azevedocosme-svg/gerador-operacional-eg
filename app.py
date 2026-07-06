@@ -40,9 +40,7 @@ def identificar_externa(linha):
     tipo = str(linha["Tipo de Veículo"]).upper()
     obs = str(linha["Observações"]).upper()
 
-    # ==============================================
     # EXTERNA COM CAMARIM
-    # ==============================================
 
     if (
         "CAMARIM" in tipo
@@ -51,9 +49,7 @@ def identificar_externa(linha):
 
         return True
 
-    # ==============================================
     # EXTERNA POR OBSERVAÇÃO
-    # ==============================================
 
     for palavra in PALAVRAS_EXTERNA:
 
@@ -99,6 +95,15 @@ if arquivo:
     st.write(df.columns.tolist())
 
     # ==============================================
+    # CONVERTE DATAS
+    # ==============================================
+
+    df["Data Hora"] = pd.to_datetime(
+        df["Data Hora"],
+        errors="coerce"
+    )
+
+    # ==============================================
     # CATEGORIA OPERACIONAL
     # ==============================================
 
@@ -125,7 +130,9 @@ if arquivo:
 
     total_veiculos = len(df)
 
-    total_externas = df["Externa"].sum()
+    total_externas = len(
+        df[df["Externa"] == True]
+    )
 
     total_camarins = len(
         df[
@@ -173,7 +180,7 @@ if arquivo:
     st.table(resumo)
 
     # ==============================================
-    # EXTERNAS
+    # BOLETIM EXTERNAS
     # ==============================================
 
     st.markdown("---")
@@ -186,7 +193,9 @@ if arquivo:
 
     if len(externas) > 0:
 
-        programas = externas["Programa"].dropna().unique()
+        programas = externas[
+            "Programa"
+        ].dropna().unique()
 
         for programa in programas:
 
@@ -194,24 +203,48 @@ if arquivo:
                 externas["Programa"] == programa
             ]
 
-            horario = grupo["Data Hora"].min()
+            # ======================================
+            # HORÁRIO
+            # ======================================
 
-            st.markdown("━━━━━━━━━━━━━━━━━━━━━━")
+            horario = grupo[
+                "Data Hora"
+            ].min()
+
+            horario_formatado = (
+                horario.strftime("%d/%m/%Y %H:%M")
+                if pd.notnull(horario)
+                else "Sem horário"
+            )
+
+            # ======================================
+            # EXIBE
+            # ======================================
+
+            st.markdown(
+                "━━━━━━━━━━━━━━━━━━━━━━"
+            )
 
             st.markdown(
                 f"### 🎬 {programa}"
             )
 
             st.markdown(
-                f"⏰ Início: {horario}"
+                f"⏰ Início: {horario_formatado}"
             )
 
             st.markdown(
                 f"🚘 Total veículos: {len(grupo)}"
             )
 
+            # ======================================
+            # RESUMO VEÍCULOS
+            # ======================================
+
             resumo_veiculos = (
-                grupo["Categoria Operacional"]
+                grupo[
+                    "Categoria Operacional"
+                ]
                 .value_counts()
             )
 
