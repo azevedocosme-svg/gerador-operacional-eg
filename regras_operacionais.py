@@ -52,3 +52,13 @@ CATEGORIAS = {
         "MICRO ÔNIBUS"
     ]
 }
+
+PALAVRAS_EXTERNA = [
+    "EXTERNA",
+    "LOCAÇÃO",
+    "LOCACAO",
+    "CAMARIM",
+    "FIGURINO",
+    "SET",
+    "FILMAGEM"
+]
