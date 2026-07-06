@@ -1,8 +1,9 @@
-# ==================================================
-# CATEGORIAS OPERACIONAIS
-# ==================================================
-
 CATEGORIAS = {
+
+    "🚌 VAN PASSAGEIROS": [
+        "VAN PASSEIO",
+        "VAN PASSEIO VIAGEM"
+    ],
 
     "🚐 PASSAGEIROS": [
         "PASSEIO",
@@ -10,11 +11,6 @@ CATEGORIAS = {
         "MINIVAN",
         "SUV",
         "BLINDADO"
-    ],
-
-    "🚌 VAN PASSAGEIROS": [
-        "VAN PASSEIO",
-        "VAN PASSEIO VIAGEM"
     ],
 
     "📦 FURGÃO / APOIO": [
@@ -56,19 +52,3 @@ CATEGORIAS = {
         "MICRO ÔNIBUS"
     ]
 }
-
-# ==================================================
-# PALAVRAS QUE DEFINEM EXTERNAS
-# ==================================================
-
-PALAVRAS_EXTERNA = [
-
-    "LOCAÇÃO",
-    "EXTERNA",
-    "GRAVAÇÃO",
-    "FILMAGEM",
-    "SET",
-    "DIÁRIA",
-    "PRODUÇÃO",
-    "EQUIPE"
-]
