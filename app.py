@@ -1,26 +1,17 @@
-import streamlit as st
-import pandas as pd
-import re
+# ==================================================
+# IDENTIFICA CATEGORIA OPERACIONAL
+# ==================================================
 
-from regras_operacionais import *
+def identificar_categoria(tipo_veiculo):
 
-st.set_page_config(page_title="SIGOT", layout="wide")
+    tipo_veiculo = str(tipo_veiculo).upper()
 
-st.title("🚀 SIGOT – Sistema Inteligente de Gestão Operacional de Transportes")
+    for categoria, palavras in CATEGORIAS.items():
 
-arquivo = st.file_uploader(
-    "📥 Importar Relatório Excel",
-    type=["xlsx"]
-)
+        for palavra in palavras:
 
-if arquivo:
+            if palavra.upper() in tipo_veiculo:
 
-    df = pd.read_excel(arquivo)
+                return categoria
 
-    st.success("Arquivo carregado com sucesso!")
-
-    st.subheader("📋 COLUNAS ENCONTRADAS")
-    st.write(list(df.columns))
-
-    st.subheader("📊 Prévia do Excel")
-    st.dataframe(df.head())
+    return "❓ OUTROS"
