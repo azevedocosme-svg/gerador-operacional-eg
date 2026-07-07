@@ -224,7 +224,7 @@ if arquivo:
 
     st.table(resumo)
 
-    # ==============================================
+# ==============================================
 # EXTERNAS
 # ==============================================
 
@@ -238,112 +238,21 @@ externas = df_unico[
     df_unico["Externa"] == True
 ]
 
+programas = externas[
+    "Programa"
+].dropna().unique()
 
-grupos = externas.groupby(
-    ["Programa"],
-    dropna=False
-)
+for programa in programas:
 
-for (os_num, programa), grupo in grupos:
+    grupo = externas[
+        externas["Programa"] == programa
+    ]
 
-    horario = grupo["Data Hora"].min()
+    horario = grupo[
+        "Data Hora"
+    ].min()
 
-    horario_txt = (
-        horario.strftime("%H:%M")
-        if pd.notnull(horario)
-        else "Sem horário"
-    )
-
-    observacoes = " ".join(
-        grupo["Observações"]
-        .fillna("")
-        .astype(str)
-        .tolist()
-    ).upper()
-
-    apresentacao = ""
-
-    for item in [
-        "RECUO MG1",
-        "RECUO DO MG1",
-        "RECUO MG3",
-        "RECUO DO MG3",
-        "COPA MG1",
-        "COPA MG3",
-        "PORTARIA 1",
-        "PORTARIA 2",
-        "PORTARIA 3",
-        "PORTARIA 4",
-        "PA 11",
-        "PA 20"
-    ]:
-
-        if item in observacoes:
-            apresentacao = item
-            break
-
-    locacao = ""
-
-    for item in [
-        "FAZENDA INDIANA",
-        "MUSAL",
-        "MERCADO SUPERBOM",
-        "SUPERBOM",
-        "BAR SALETE",
-        "ATERRO DO FLAMENGO",
-        "TAVARES BASTOS"
-    ]:
-
-        if item in observacoes:
-            locacao = item
-            break
-
-    st.markdown("━━━━━━━━━━━━━━━━━━━━━━")
-
-    st.markdown(
-        f"### 🎬 {programa}"
-    )
-
-    st.markdown(
-        f"**🆔 OS:** {os_num}"
-    )
-
-    st.markdown(
-        f"**🕓 Saída EG:** {horario_txt}"
-    )
-
-    if apresentacao:
-
-        st.markdown(
-            f"**🏢 Apresentação:** {apresentacao}"
-        )
-
-    if locacao:
-
-        st.markdown(
-            f"**📍 Locação:** {locacao}"
-        )
-
-    st.markdown("### 🚘 Operação")
-
-    tipos = (
-        grupo["Tipo de Veículo"]
-        .value_counts()
-    )
-
-    total = 0
-
-    for tipo, qtd in tipos.items():
-
-        total += qtd
-
-        st.markdown(
-            f"- {qtd:02d} {tipo}"
-        )
-
-    st.markdown(
-        f"### 🚚 Total: {total} veículos"
-    )
+    ...
 
     # ==============================================
     # PRÉVIA
