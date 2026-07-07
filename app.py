@@ -177,4 +177,8 @@ if arquivo:
 
     )
 
-    df_unico = df.drop_duplicates(
+  
+df_unico = df.drop_duplicates(
+        subset=["Chave Operacional"]
+    ).copy()
+
