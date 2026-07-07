@@ -224,76 +224,124 @@ if arquivo:
     st.table(resumo)
 
     # ==============================================
-    # EXTERNAS
-    # ==============================================
+# EXTERNAS
+# ==============================================
 
-    st.markdown("---")
+st.markdown("---")
 
-    st.markdown(
-        "# 🚚 BOLETIM DE EXTERNAS"
+st.markdown(
+    "# 🚚 BOLETIM DE EXTERNAS"
+)
+
+externas = df_unico[
+    df_unico["Externa"] == True
+]
+
+grupos = externas.groupby(
+    ["OS", "Programa"],
+    dropna=False
+)
+
+for (os_num, programa), grupo in grupos:
+
+    horario = grupo["Data Hora"].min()
+
+    horario_txt = (
+        horario.strftime("%H:%M")
+        if pd.notnull(horario)
+        else "Sem horário"
     )
 
-    externas = df_unico[
-        df_unico["Externa"] == True
-    ]
+    observacoes = " ".join(
+        grupo["Observações"]
+        .fillna("")
+        .astype(str)
+        .tolist()
+    ).upper()
 
-    programas = externas[
-        "Programa"
-    ].dropna().unique()
+    apresentacao = ""
 
-    for programa in programas:
+    for item in [
+        "RECUO MG1",
+        "RECUO DO MG1",
+        "RECUO MG3",
+        "RECUO DO MG3",
+        "COPA MG1",
+        "COPA MG3",
+        "PORTARIA 1",
+        "PORTARIA 2",
+        "PORTARIA 3",
+        "PORTARIA 4",
+        "PA 11",
+        "PA 20"
+    ]:
 
-        grupo = externas[
-            externas["Programa"] == programa
-        ]
+        if item in observacoes:
+            apresentacao = item
+            break
 
-        horario = grupo[
-            "Data Hora"
-        ].min()
+    locacao = ""
 
-        horario_formatado = (
+    for item in [
+        "FAZENDA INDIANA",
+        "MUSAL",
+        "MERCADO SUPERBOM",
+        "SUPERBOM",
+        "BAR SALETE",
+        "ATERRO DO FLAMENGO",
+        "TAVARES BASTOS"
+    ]:
 
-            horario.strftime(
-                "%d/%m/%Y %H:%M"
-            )
+        if item in observacoes:
+            locacao = item
+            break
 
-            if pd.notnull(horario)
+    st.markdown("━━━━━━━━━━━━━━━━━━━━━━")
 
-            else "Sem horário"
+    st.markdown(
+        f"### 🎬 {programa}"
+    )
 
-        )
+    st.markdown(
+        f"**🆔 OS:** {os_num}"
+    )
+
+    st.markdown(
+        f"**🕓 Saída EG:** {horario_txt}"
+    )
+
+    if apresentacao:
 
         st.markdown(
-            "━━━━━━━━━━━━━━━━━━━━━━"
+            f"**🏢 Apresentação:** {apresentacao}"
         )
+
+    if locacao:
 
         st.markdown(
-            f"### 🎬 {programa}"
+            f"**📍 Locação:** {locacao}"
         )
+
+    st.markdown("### 🚘 Operação")
+
+    tipos = (
+        grupo["Tipo de Veículo"]
+        .value_counts()
+    )
+
+    total = 0
+
+    for tipo, qtd in tipos.items():
+
+        total += qtd
 
         st.markdown(
-            f"⏰ Início: {horario_formatado}"
+            f"- {qtd:02d} {tipo}"
         )
 
-        st.markdown(
-            f"🚘 Total veículos: {len(grupo)}"
-        )
-
-        resumo_veiculos = (
-
-            grupo[
-                "Categoria Operacional"
-            ]
-
-            .value_counts()
-
-        )
-
-        for tipo, qtd in resumo_veiculos.items():
-
-            st.markdown(
-                f"🚘 {qtd} {tipo}"
-            )
+    st.markdown(
+        f"### 🚚 Total: {total} veículos"
+    )
 
     # ==============================================
     # PRÉVIA
