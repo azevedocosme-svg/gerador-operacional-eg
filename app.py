@@ -1,4 +1,3 @@
-from boletim_executivo import gerar_boletim_executivo
 import streamlit as st
 import pandas as pd
 
@@ -224,35 +223,77 @@ if arquivo:
 
     st.table(resumo)
 
-# ==============================================
-# EXTERNAS
-# ==============================================
+    # ==============================================
+    # EXTERNAS
+    # ==============================================
 
-st.markdown("---")
+    st.markdown("---")
 
-st.markdown(
-    "# 🚚 BOLETIM DE EXTERNAS"
-)
+    st.markdown(
+        "# 🚚 BOLETIM DE EXTERNAS"
+    )
 
-externas = df_unico[
-    df_unico["Externa"] == True
-]
-
-programas = externas[
-    "Programa"
-].dropna().unique()
-
-for programa in programas:
-
-    grupo = externas[
-        externas["Programa"] == programa
+    externas = df_unico[
+        df_unico["Externa"] == True
     ]
 
-    horario = grupo[
-        "Data Hora"
-    ].min()
+    programas = externas[
+        "Programa"
+    ].dropna().unique()
 
-    ...
+    for programa in programas:
+
+        grupo = externas[
+            externas["Programa"] == programa
+        ]
+
+        horario = grupo[
+            "Data Hora"
+        ].min()
+
+        horario_formatado = (
+
+            horario.strftime(
+                "%d/%m/%Y %H:%M"
+            )
+
+            if pd.notnull(horario)
+
+            else "Sem horário"
+
+        )
+
+        st.markdown(
+            "━━━━━━━━━━━━━━━━━━━━━━"
+        )
+
+        st.markdown(
+            f"### 🎬 {programa}"
+        )
+
+        st.markdown(
+            f"⏰ Início: {horario_formatado}"
+        )
+
+        st.markdown(
+            f"🚘 Total veículos: {len(grupo)}"
+        )
+
+        resumo_veiculos = (
+
+            grupo[
+                "Categoria Operacional"
+            ]
+
+            .value_counts()
+
+        )
+
+        for tipo, qtd in resumo_veiculos.items():
+
+            st.markdown(
+                f"🚘 {qtd} {tipo}"
+            )
 
     # ==============================================
     # PRÉVIA
