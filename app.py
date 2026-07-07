@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 
 from regras_operacionais import *
+from boletim_externas import gerar_boletim
 
 # ==================================================
 # CONFIG
@@ -44,21 +45,15 @@ def identificar_externa(linha):
         linha["Observações"]
     ).upper()
 
-    # CAMARIM / FIGURINO
-
     if (
         "CAMARIM" in tipo
         or "FIGURINO" in tipo
     ):
-
         return True
-
-    # OBSERVAÇÃO
 
     for palavra in PALAVRAS_EXTERNA:
 
         if palavra in obs:
-
             return True
 
     return False
@@ -68,6 +63,7 @@ def identificar_externa(linha):
 # ==================================================
 
 st.title("🚀 SIGOT")
+
 st.subheader(
     "Sistema Inteligente de Gestão Operacional de Transportes"
 )
@@ -113,196 +109,3 @@ if arquivo:
     )
 
     # ==============================================
-    # CHAVE OPERACIONAL
-    # ==============================================
-
-    df["Chave Operacional"] = (
-
-        df["OT"].astype(str)
-
-        + "_"
-
-        + df["Motorista"].astype(str)
-
-        + "_"
-
-        + df["Tipo de Veículo"].astype(str)
-
-    )
-
-    # ==============================================
-    # REMOVE DUPLICIDADE
-    # ==============================================
-
-    df_unico = df.drop_duplicates(
-        subset=["Chave Operacional"]
-    )
-
-    # ==============================================
-    # CATEGORIA
-    # ==============================================
-
-    df_unico["Categoria Operacional"] = (
-        df_unico["Tipo de Veículo"]
-        .apply(identificar_categoria)
-    )
-
-    # ==============================================
-    # EXTERNA
-    # ==============================================
-
-    df_unico["Externa"] = df_unico.apply(
-        identificar_externa,
-        axis=1
-    )
-
-    # ==============================================
-    # DASHBOARD
-    # ==============================================
-
-    st.markdown("---")
-
-    total_veiculos = len(df_unico)
-
-    total_externas = len(
-        df_unico[
-            df_unico["Externa"] == True
-        ]
-    )
-
-    total_camarins = len(
-        df_unico[
-            df_unico["Categoria Operacional"]
-            == "🎭 CAMARIM"
-        ]
-    )
-
-    col1, col2, col3 = st.columns(3)
-
-    col1.metric(
-        "🚚 Veículos Reais",
-        total_veiculos
-    )
-
-    col2.metric(
-        "🎬 Externas",
-        total_externas
-    )
-
-    col3.metric(
-        "🎭 Camarins",
-        total_camarins
-    )
-
-    # ==============================================
-    # RESUMO
-    # ==============================================
-
-    st.markdown("---")
-
-    st.markdown(
-        "# 📊 RESUMO POR CATEGORIA"
-    )
-
-    resumo = (
-
-        df_unico[
-            "Categoria Operacional"
-        ]
-
-        .value_counts()
-
-        .reset_index()
-
-    )
-
-    resumo.columns = [
-        "Categoria",
-        "Quantidade"
-    ]
-
-    st.table(resumo)
-
-    # ==============================================
-    # EXTERNAS
-    # ==============================================
-
-    st.markdown("---")
-
-    st.markdown(
-        "# 🚚 BOLETIM DE EXTERNAS"
-    )
-
-    externas = df_unico[
-        df_unico["Externa"] == True
-    ]
-
-    programas = externas[
-        "Programa"
-    ].dropna().unique()
-
-    for programa in programas:
-
-        grupo = externas[
-            externas["Programa"] == programa
-        ]
-
-        horario = grupo[
-            "Data Hora"
-        ].min()
-
-        horario_formatado = (
-
-            horario.strftime(
-                "%d/%m/%Y %H:%M"
-            )
-
-            if pd.notnull(horario)
-
-            else "Sem horário"
-
-        )
-
-        st.markdown(
-            "━━━━━━━━━━━━━━━━━━━━━━"
-        )
-
-        st.markdown(
-            f"### 🎬 {programa}"
-        )
-
-        st.markdown(
-            f"⏰ Início: {horario_formatado}"
-        )
-
-        st.markdown(
-            f"🚘 Total veículos: {len(grupo)}"
-        )
-
-        resumo_veiculos = (
-
-            grupo[
-                "Categoria Operacional"
-            ]
-
-            .value_counts()
-
-        )
-
-        for tipo, qtd in resumo_veiculos.items():
-
-            st.markdown(
-                f"🚘 {qtd} {tipo}"
-            )
-
-    # ==============================================
-    # PRÉVIA
-    # ==============================================
-
-    st.markdown("---")
-
-    st.subheader(
-        "📊 Prévia do Excel"
-    )
-
-    st.dataframe(df_unico.head())
