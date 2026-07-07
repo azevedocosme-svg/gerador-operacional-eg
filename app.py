@@ -25,6 +25,7 @@ def identificar_categoria(tipo):
         for palavra in palavras:
 
             if palavra.upper() in tipo:
+
                 return categoria
 
     return "❓ OUTROS"
@@ -43,86 +44,30 @@ def identificar_externa(linha):
         linha["Observações"]
     ).upper()
 
+    # CAMARIM / FIGURINO
+
     if (
         "CAMARIM" in tipo
         or "FIGURINO" in tipo
     ):
+
         return True
+
+    # OBSERVAÇÃO
 
     for palavra in PALAVRAS_EXTERNA:
 
         if palavra in obs:
+
             return True
 
     return False
-
-# ==================================================
-# EXTRAI APRESENTAÇÃO
-# ==================================================
-
-def extrair_apresentacao(texto):
-
-    texto = str(texto).upper()
-
-    palavras = [
-        "RECUO MG1",
-        "RECUO DO MG1",
-        "RECUO MG3",
-        "RECUO DO MG3",
-        "COPA MG1",
-        "COPA MG3",
-        "PORTARIA 1",
-        "PORTARIA 2",
-        "PORTARIA 3",
-        "PORTARIA 4",
-        "PA 11",
-        "PA 20",
-        "CDE"
-    ]
-
-    for item in palavras:
-
-        if item in texto:
-            return item
-
-    return ""
-
-# ==================================================
-# EXTRAI LOCAÇÃO
-# ==================================================
-
-def extrair_locacao(texto):
-
-    texto = str(texto).upper()
-
-    locais = [
-
-        "FAZENDA INDIANA",
-        "MUSAL",
-        "MERCADO SUPERBOM",
-        "SUPERBOM",
-        "BAR SALETE",
-        "ATERRO DO FLAMENGO",
-        "BOSQUE DA GLORIA",
-        "TAVARES BASTOS",
-        "TIJUCA",
-        "CATETE"
-
-    ]
-
-    for item in locais:
-
-        if item in texto:
-            return item
-
-    return ""
 
 # ==================================================
 # TÍTULO
 # ==================================================
 
 st.title("🚀 SIGOT")
-
 st.subheader(
     "Sistema Inteligente de Gestão Operacional de Transportes"
 )
@@ -148,20 +93,28 @@ if arquivo:
         "✅ Arquivo carregado com sucesso"
     )
 
+    # ==============================================
+    # COLUNAS
+    # ==============================================
+
     st.subheader(
         "📋 COLUNAS ENCONTRADAS"
     )
 
     st.write(df.columns.tolist())
 
+    # ==============================================
+    # DATA
+    # ==============================================
+
     df["Data Hora"] = pd.to_datetime(
         df["Data Hora"],
         errors="coerce"
     )
 
-    # ==================================================
-    # CHAVE
-    # ==================================================
+    # ==============================================
+    # CHAVE OPERACIONAL
+    # ==============================================
 
     df["Chave Operacional"] = (
 
@@ -177,32 +130,35 @@ if arquivo:
 
     )
 
-  
-df_unico = df.drop_duplicates(
-        subset=["Chave Operacional"]
-    ).copy()
+    # ==============================================
+    # REMOVE DUPLICIDADE
+    # ==============================================
 
-    # ==================================================
+    df_unico = df.drop_duplicates(
+        subset=["Chave Operacional"]
+    )
+
+    # ==============================================
     # CATEGORIA
-    # ==================================================
+    # ==============================================
 
     df_unico["Categoria Operacional"] = (
         df_unico["Tipo de Veículo"]
         .apply(identificar_categoria)
     )
 
-    # ==================================================
+    # ==============================================
     # EXTERNA
-    # ==================================================
+    # ==============================================
 
     df_unico["Externa"] = df_unico.apply(
         identificar_externa,
         axis=1
     )
 
-    # ==================================================
+    # ==============================================
     # DASHBOARD
-    # ==================================================
+    # ==============================================
 
     st.markdown("---")
 
@@ -238,9 +194,9 @@ df_unico = df.drop_duplicates(
         total_camarins
     )
 
-    # ==================================================
+    # ==============================================
     # RESUMO
-    # ==================================================
+    # ==============================================
 
     st.markdown("---")
 
@@ -249,9 +205,15 @@ df_unico = df.drop_duplicates(
     )
 
     resumo = (
-        df_unico["Categoria Operacional"]
+
+        df_unico[
+            "Categoria Operacional"
+        ]
+
         .value_counts()
+
         .reset_index()
+
     )
 
     resumo.columns = [
@@ -261,9 +223,9 @@ df_unico = df.drop_duplicates(
 
     st.table(resumo)
 
-    # ==================================================
-    # BOLETIM
-    # ==================================================
+    # ==============================================
+    # EXTERNAS
+    # ==============================================
 
     st.markdown("---")
 
@@ -275,108 +237,67 @@ df_unico = df.drop_duplicates(
         df_unico["Externa"] == True
     ]
 
-    grupos = externas.groupby(
-        ["OS", "Programa"],
-        dropna=False
-    )
+    programas = externas[
+        "Programa"
+    ].dropna().unique()
 
-    texto_boletim = ""
+    for programa in programas:
 
-    for (os, programa), grupo in grupos:
+        grupo = externas[
+            externas["Programa"] == programa
+        ]
 
-        horario = grupo["Data Hora"].min()
+        horario = grupo[
+            "Data Hora"
+        ].min()
 
-        horario_txt = (
-            horario.strftime("%H:%M")
+        horario_formatado = (
+
+            horario.strftime(
+                "%d/%m/%Y %H:%M"
+            )
+
             if pd.notnull(horario)
+
             else "Sem horário"
+
         )
 
-        observacoes = " ".join(
-            grupo["Observações"]
-            .fillna("")
-            .astype(str)
-            .tolist()
+        st.markdown(
+            "━━━━━━━━━━━━━━━━━━━━━━"
         )
 
-        apresentacao = extrair_apresentacao(
-            observacoes
+        st.markdown(
+            f"### 🎬 {programa}"
         )
 
-        locacao = extrair_locacao(
-            observacoes
+        st.markdown(
+            f"⏰ Início: {horario_formatado}"
         )
 
-        texto_boletim += (
-            "━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        st.markdown(
+            f"🚘 Total veículos: {len(grupo)}"
         )
 
-        texto_boletim += (
-            f"🎬 {programa}\n\n"
-        )
+        resumo_veiculos = (
 
-        texto_boletim += (
-            f"🆔 OS: {os}\n\n"
-        )
+            grupo[
+                "Categoria Operacional"
+            ]
 
-        texto_boletim += (
-            "🕓 Saída EG\n"
-        )
-
-        texto_boletim += (
-            f"{horario_txt}\n\n"
-        )
-
-        if apresentacao:
-
-            texto_boletim += (
-                "🏢 Apresentação\n"
-            )
-
-            texto_boletim += (
-                f"{apresentacao}\n\n"
-            )
-
-        if locacao:
-
-            texto_boletim += (
-                "📍 Locação\n"
-            )
-
-            texto_boletim += (
-                f"{locacao}\n\n"
-            )
-
-        texto_boletim += (
-            "🚘 Operação\n\n"
-        )
-
-        tipos = (
-            grupo["Tipo de Veículo"]
             .value_counts()
+
         )
 
-        total = 0
+        for tipo, qtd in resumo_veiculos.items():
 
-        for tipo, qtd in tipos.items():
-
-            texto_boletim += (
-                f"{qtd:02d} {tipo}\n"
+            st.markdown(
+                f"🚘 {qtd} {tipo}"
             )
 
-            total += qtd
-
-        texto_boletim += "\n"
-
-        texto_boletim += (
-            f"🚚 Total: {total} veículos\n\n"
-        )
-
-    st.text(texto_boletim)
-
-    # ==================================================
+    # ==============================================
     # PRÉVIA
-    # ==================================================
+    # ==============================================
 
     st.markdown("---")
 
