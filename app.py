@@ -1,3 +1,4 @@
+from boletim_executivo import gerar_boletim_executivo
 import streamlit as st
 import pandas as pd
 
