@@ -1,6 +1,8 @@
 import pandas as pd
 from collections import Counter
 
+from extrator_observacoes import interpretar_observacao
+
 
 def gerar_boletim(df):
 
@@ -9,51 +11,93 @@ def gerar_boletim(df):
     if externas.empty:
         return ["Nenhuma externa encontrada."]
 
-    # Ordena pelo horário
-    externas = externas.sort_values("Data Hora")
+    externas["Data Hora"] = pd.to_datetime(
+        externas["Data Hora"],
+        errors="coerce"
+    )
 
     boletim = []
 
-    grupos = externas.groupby(["OS", "Programa"], dropna=False)
+    grupos = externas.groupby(
+        ["OS", "Programa"],
+        dropna=False
+    )
 
     for (os, programa), grupo in grupos:
 
-        horario = pd.to_datetime(grupo["Data Hora"]).min()
+        grupo = grupo.sort_values("Data Hora")
 
-        horario = horario.strftime("%H:%M")
+        horario = grupo["Data Hora"].min()
 
-        boletim.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        horario_txt = (
+            horario.strftime("%H:%M")
+            if pd.notnull(horario)
+            else "Não informado"
+        )
+
+        observacoes = " ".join(
+            grupo["Observações"]
+            .fillna("")
+            .astype(str)
+            .tolist()
+        )
+
+        info = interpretar_observacao(
+            observacoes
+        )
+
+        apresentacao = info["apresentacao"]
+        locacao = info["locacao"]
+
+        contador = Counter(
+            grupo["Tipo de Veículo"]
+            .fillna("Não informado")
+        )
+
+        total = sum(contador.values())
+
+        boletim.append("━━━━━━━━━━━━━━━━━━━━━━")
         boletim.append("")
+
         boletim.append(f"🎬 {programa}")
+        boletim.append("")
+
         boletim.append(f"🆔 OS: {os}")
         boletim.append("")
-        boletim.append(f"🕓 Horário: {horario}")
 
-        # Local
-        endereco = grupo["Localidade + Endereço"].dropna()
+        boletim.append("🕓 Saída EG")
+        boletim.append(horario_txt)
+        boletim.append("")
 
-        if len(endereco):
-
+        if apresentacao:
+            boletim.append("🏢 Apresentação")
+            boletim.append(apresentacao)
             boletim.append("")
-            boletim.append("📍 Local")
 
-            boletim.append(endereco.iloc[0])
+        if locacao:
+            boletim.append("📍 Locação")
+            boletim.append(locacao)
+            boletim.append("")
 
-        boletim.append("")
         boletim.append("🚘 Operação")
+        boletim.append("")
 
-        contador = Counter(grupo["Tipo de Veículo"])
+        for veiculo, qtd in sorted(
+            contador.items(),
+            key=lambda x: x[1],
+            reverse=True
+        ):
 
-        total = 0
-
-        for veiculo, qtd in sorted(contador.items()):
-
-            boletim.append(f"{qtd:02d} {veiculo}")
-
-            total += qtd
+            boletim.append(
+                f"{qtd:02d} {veiculo}"
+            )
 
         boletim.append("")
-        boletim.append(f"🚚 Total: {total} veículos")
+        boletim.append(
+            f"🚚 Total: {total} veículos"
+        )
+
+        boletim.append("")
         boletim.append("")
 
     return boletim
