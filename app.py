@@ -237,8 +237,9 @@ externas = df_unico[
     df_unico["Externa"] == True
 ]
 
+
 grupos = externas.groupby(
-    ["OS", "Programa"],
+    ["Programa"],
     dropna=False
 )
 
