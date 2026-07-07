@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 
 from regras_operacionais import *
-from boletim_externas import gerar_boletim
 
 # ==================================================
 # CONFIG
@@ -26,7 +25,6 @@ def identificar_categoria(tipo):
         for palavra in palavras:
 
             if palavra.upper() in tipo:
-
                 return categoria
 
     return "❓ OUTROS"
@@ -59,6 +57,67 @@ def identificar_externa(linha):
     return False
 
 # ==================================================
+# EXTRAI APRESENTAÇÃO
+# ==================================================
+
+def extrair_apresentacao(texto):
+
+    texto = str(texto).upper()
+
+    palavras = [
+        "RECUO MG1",
+        "RECUO DO MG1",
+        "RECUO MG3",
+        "RECUO DO MG3",
+        "COPA MG1",
+        "COPA MG3",
+        "PORTARIA 1",
+        "PORTARIA 2",
+        "PORTARIA 3",
+        "PORTARIA 4",
+        "PA 11",
+        "PA 20",
+        "CDE"
+    ]
+
+    for item in palavras:
+
+        if item in texto:
+            return item
+
+    return ""
+
+# ==================================================
+# EXTRAI LOCAÇÃO
+# ==================================================
+
+def extrair_locacao(texto):
+
+    texto = str(texto).upper()
+
+    locais = [
+
+        "FAZENDA INDIANA",
+        "MUSAL",
+        "MERCADO SUPERBOM",
+        "SUPERBOM",
+        "BAR SALETE",
+        "ATERRO DO FLAMENGO",
+        "BOSQUE DA GLORIA",
+        "TAVARES BASTOS",
+        "TIJUCA",
+        "CATETE"
+
+    ]
+
+    for item in locais:
+
+        if item in texto:
+            return item
+
+    return ""
+
+# ==================================================
 # TÍTULO
 # ==================================================
 
@@ -89,23 +148,33 @@ if arquivo:
         "✅ Arquivo carregado com sucesso"
     )
 
-    # ==============================================
-    # COLUNAS
-    # ==============================================
-
     st.subheader(
         "📋 COLUNAS ENCONTRADAS"
     )
 
     st.write(df.columns.tolist())
 
-    # ==============================================
-    # DATA
-    # ==============================================
-
     df["Data Hora"] = pd.to_datetime(
         df["Data Hora"],
         errors="coerce"
     )
 
-    # ==============================================
+    # ==================================================
+    # CHAVE
+    # ==================================================
+
+    df["Chave Operacional"] = (
+
+        df["OT"].astype(str)
+
+        + "_"
+
+        + df["Motorista"].astype(str)
+
+        + "_"
+
+        + df["Tipo de Veículo"].astype(str)
+
+    )
+
+    df_unico = df.drop_duplicates(
