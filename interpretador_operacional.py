@@ -1,183 +1,109 @@
 """
-===========================================
-SIGOT
-INTERPRETADOR OPERACIONAL
-Versão 1.0
-===========================================
+==========================================================
+SIGOT - INTERPRETADOR OPERACIONAL
+Versão 2.0
+==========================================================
+
+Responsável por transformar uma planilha Excel em
+objetos OperacaoExterna.
+
+Fluxo:
+
+Excel
+    ↓
+DataFrame
+    ↓
+InterpretadorOperacional
+    ↓
+OperacaoExterna
+    ↓
+Boletim
+Dashboard
+Banco
+Caravanas
+
+Autor: Projeto SIGOT
 """
 
-import re
+from collections import defaultdict
+from typing import List
+
 import pandas as pd
+
+from modelos import (
+    OperacaoExterna,
+    Veiculo,
+    Frente
+)
 
 from extrator_observacoes import extrair_informacoes
 
+from regras_operacionais import (
+    TIPOS_CAMARIM,
+    TIPOS_FIGURINO,
+    TIPOS_VANS,
+    TIPOS_FURGOES,
+    TIPOS_KIA
+)
 
-# ==========================================
-# CLASSE DA OPERAÇÃO
-# ==========================================
 
-class OperacaoExterna:
+class InterpretadorOperacional:
+    """
+    Classe principal do SIGOT.
+
+    Recebe um DataFrame do Excel e devolve
+    uma lista de OperacaoExterna.
+    """
 
     def __init__(self):
 
-        self.producao = ""
+        pass
 
-        self.os = ""
+    # =====================================================
+    # MÉTODO PRINCIPAL
+    # =====================================================
 
-        self.externa = False
+    def interpretar_dataframe(
+        self,
+        df: pd.DataFrame
+    ) -> List[OperacaoExterna]:
 
-        self.apresentacao = ""
+        if df.empty:
+            return []
 
-        self.horario_saida = ""
-
-        self.locacao = ""
-
-        self.deslocamentos = []
-
-        self.observacoes = []
-
-        self.veiculos = []
-
-        self.frentes = []
-
-        self.motoristas = []
-
-        self.prestadores = []
-
-
-# ==========================================
-# INTERPRETADOR
-# ==========================================
-
-def interpretar_producao(df):
-
-    operacao = OperacaoExterna()
-
-    if len(df) == 0:
-        return operacao
-
-    # -------------------------
-    # PRODUÇÃO
-    # -------------------------
-
-    operacao.producao = str(
-        df.iloc[0]["Programa"]
-    )
-
-    operacao.os = str(
-        df.iloc[0]["OS"]
-    )
-
-    # -------------------------
-    # ANALISA LINHA A LINHA
-    # -------------------------
-
-    for _, linha in df.iterrows():
-
-        tipo = str(
-            linha["Tipo de Veículo"]
-        )
-
-        observacao = str(
-            linha["Observações"]
-        )
-
-        passageiro = str(
-            linha["Passageiro"]
-        )
-
-        motorista = str(
-            linha["Motorista"]
-        )
-
-        prestador = str(
-            linha["Prestador do veículo"]
-        )
-
-        # ----------------------
-        # VEÍCULOS
-        # ----------------------
-
-        operacao.veiculos.append(tipo)
-
-        if motorista and motorista != "nan":
-            operacao.motoristas.append(motorista)
-
-        if prestador and prestador != "nan":
-            operacao.prestadores.append(prestador)
-
-        # ----------------------
-        # IDENTIFICA EXTERNA
-        # ----------------------
-
-        tipo_upper = tipo.upper()
-
-        if (
-            "CAMARIM" in tipo_upper
-            or "FIGURINO" in tipo_upper
-        ):
-            operacao.externa = True
-
-        # ----------------------
-        # PASSAGEIRO
-        # ----------------------
-
-        passageiro_upper = passageiro.upper()
-
-        if "EXTERNA" in passageiro_upper:
-
-            operacao.frentes.append(
-                passageiro
+        if "Programa" not in df.columns:
+            raise Exception(
+                "Coluna 'Programa' não encontrada."
             )
 
-        # ----------------------
-        # OBSERVAÇÃO
-        # ----------------------
+        operacoes = []
 
-        dados = extrair_informacoes(
-            observacao
-        )
+        grupos = df.groupby("Programa")
 
-        if dados.get("apresentacao"):
+        for producao, dados in grupos:
 
-            operacao.apresentacao = dados["apresentacao"]
-
-        if dados.get("saida"):
-
-            operacao.horario_saida = dados["saida"]
-
-        if dados.get("locacao"):
-
-            operacao.locacao = dados["locacao"]
-
-        if dados.get("deslocamentos"):
-
-            operacao.deslocamentos.extend(
-                dados["deslocamentos"]
+            operacao = self.interpretar_producao(
+                producao,
+                dados
             )
 
-        if observacao not in operacao.observacoes:
+            if operacao is not None:
+                operacoes.append(operacao)
 
-            operacao.observacoes.append(
-                observacao
-            )
+        return operacoes
 
-    # Remove duplicados
+    # =====================================================
+    # INTERPRETAR PRODUÇÃO
+    # =====================================================
 
-    operacao.veiculos = sorted(
-        list(set(operacao.veiculos))
-    )
+    def interpretar_producao(
+        self,
+        producao: str,
+        df: pd.DataFrame
+    ) -> OperacaoExterna:
 
-    operacao.motoristas = sorted(
-        list(set(operacao.motoristas))
-    )
+        operacao = OperacaoExterna()
 
-    operacao.prestadores = sorted(
-        list(set(operacao.prestadores))
-    )
+        operacao.producao = str(producao)
 
-    operacao.frentes = sorted(
-        list(set(operacao.frentes))
-    )
-
-    return operacao
+        # continua no próximo bloco...
